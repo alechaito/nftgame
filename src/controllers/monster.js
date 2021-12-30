@@ -1,12 +1,12 @@
-const {InventoryMonsters, Monsters} = require("../models/monster");
+const { InventoryMonsters, Monsters } = require("../models/monster");
 const Database = require("../config/db");
-const {QueryTypes} = require("sequelize");
+const { QueryTypes } = require("sequelize");
 const UsersController = require("./user");
 const Users = require("../models/user");
 const RewardController = require("./reward");
 const Helper = require("./helper");
 
-const {randomBytes} = require("crypto");
+const { randomBytes } = require("crypto");
 
 var wallet = "0x6C3CF1365a872915D8F6ab03C89326F28C8a146c";
 
@@ -16,7 +16,7 @@ const getAllByUserId = async (id_user) => {
         INNER JOIN monsters m ON m.id = im.id_monster
         WHERE im.id_user = :id_user`,
         {
-            replacements: {id_user: id_user},
+            replacements: { id_user: id_user },
             type: QueryTypes.SELECT,
         }
     );
@@ -40,7 +40,7 @@ const getLevel = async (exp, lvl) => {
 
 const getInventoryMonsterByID = async (id) => {
     try {
-        return await InventoryMonsters.findOne({where: {id: id}});
+        return await InventoryMonsters.findOne({ where: { id: id } });
     } catch (error) {
         console.log(error);
         return null;
@@ -48,7 +48,7 @@ const getInventoryMonsterByID = async (id) => {
 };
 
 const feed = async (req, res) => {
-    let {uuid, wallet} = req.body;
+    let { uuid, wallet } = req.body;
 
     let instance = await getInventoryMonsterByID(uuid);
     //console.log("instance", instance);
@@ -63,7 +63,7 @@ const feed = async (req, res) => {
             // feed and set exp
             console.log("instance id monster", instance.id_monster);
             let monster = await Monsters.findOne({
-                where: {id: instance.id_monster},
+                where: { id: instance.id_monster },
             });
             let newexp = instance.exp + (await getExpByRarity(monster.rarity));
             //let level = await getLevel(newexp, instance.level);
@@ -73,7 +73,7 @@ const feed = async (req, res) => {
         }
     } else {
         console.log("[LOG] Monster not hungry..");
-        let resultFeed = await instance.update({feed: false});
+        let resultFeed = await instance.update({ feed: false });
         //console.log("result update", resultFeed.dataValues.id);
     }
 
@@ -86,9 +86,10 @@ const getEggPrice = async () => {
 
 const mintEgg = async (req, res) => {
     try {
-        let {wallet} = req.body;
+        let { wallet } = req.body;
         // check params
-        if (!Helper.validParam(wallet)) return res.redirect("/account/manage");
+        if (!Helper.validParam(wallet)) {
+        }
         //-----------------------
         let eggPrice = await getEggPrice();
         let user = await UsersController.getByWallet(wallet);
@@ -125,44 +126,22 @@ const createInventoryMonster = async (wallet, monster) => {
     }
 };
 
-const getExpByRarity = async (rarity) => {
-    console.log("rarity", rarity);
-    switch (rarity) {
-        case "common":
-            return 100;
-        case "uncommon":
-            return 200;
-        case "rare":
-            console.log("era pra vim aqui");
-            return 300;
-        case "epic":
-            return 400;
-    }
-    return 100;
-};
-
 const randomRarity = async () => {
-    let randomNumber = await Helper.getRandomNumber(100);
-    console.log(randomNumber);
-    if (randomNumber >= 0 && randomNumber < 52) {
+    let randomNumber = await Helper.getRandomNumber(0, 100);
+    if (randomNumber >= 0 && randomNumber < 89) {
         return "common";
-    } else if (randomNumber >= 52 && randomNumber < 87) {
-        return "uncommon";
-    } else if (randomNumber >= 87 && randomNumber < 97) {
+    } else if (randomNumber >= 89 && randomNumber < 99) {
         return "rare";
-    } else if (randomNumber >= 97) {
+    } else if (randomNumber >= 99) {
         return "epic";
     }
 };
 
 const getRandomMonster = async (type) => {
-    console.log("----------------- ");
     try {
-        Array.prototype.sample = function () {
-            return this[Math.floor(Math.random() * this.length)];
-        };
-        let monsters = await Monsters.findAll({where: {rarity: type}});
-        return monsters.sample();
+        let monsters = await Monsters.findAll({ where: { rarity: type } });
+        let randomNumber = await Helper.getRandomNumber(0, monster.length);
+        return monsters[randomNumber];
     } catch (error) {
         console.log(error);
         return null;
@@ -171,15 +150,15 @@ const getRandomMonster = async (type) => {
 
 const update = async (req, res) => {
     try {
-        let {monster_id, wallet} = req.body;
+        let { monster_id, wallet } = req.body;
         let updateCost = 300;
-        let myMonster = await InventoryMonsters.findOne({where: {id: monster_id}});
+        let myMonster = await InventoryMonsters.findOne({ where: { id: monster_id } });
 
         if (!myMonster) {
             throw new Error(`Cannot find this monster with id: ${monster_id} `);
         }
 
-        let user = await Users.findOne({where: {wallet: wallet}});
+        let user = await Users.findOne({ where: { wallet: wallet } });
         if (user.id != myMonster.id_user) {
             throw new Error(`Players is not owner of this monster, possible try to hack.`);
         }
@@ -196,7 +175,7 @@ const update = async (req, res) => {
         }
 
         // its all ok, lets upgrade monster to the next level
-        await myMonster.update({level: nextLevel});
+        await myMonster.update({ level: nextLevel });
         await UsersController.increaseBalanceByWallet(wallet, -updateCost);
         console.log(`Ok, monster upgrade to level ${nextLevel}`);
         return res.redirect("/monster/view/all");
