@@ -1,0 +1,57 @@
+<html>
+
+<head></head>
+
+<body>
+    Wallet address: <%- user.wallet %>
+    </br>
+    Balance Available: <%- user.balance %> tokens</br>
+    Total Elixirs: <%- user.elixir %> elixirs</br>
+    <hr>
+
+    <form method="POST" action="http://localhost:3000/account/deposit">
+        <input type="hidden" name="wallet" value="<%- user.wallet %>"/>
+        <input type="hidden" name="amount" value="10"/>
+        <button type="submit">Deposit</button>
+    </form>
+    
+    <form method="POST" action="http://localhost:3000/account/withdraw">
+        <input type="hidden" name="wallet" value="<%- user.wallet %>"/>
+        <input type="hidden" name="amount" value="-10"/>
+        <button type="submit">Withdraw</button>
+    </form>
+
+    <hr>
+
+    <h5>Mint Egg (common, uncommon, rare, epic)</h5>
+    <form method="POST" action="http://localhost:3000/monster/mint">
+        <input type="hidden" name="wallet" value="0x6C3CF1365a872915D8F6ab03C89326F28C8a146c">
+        <button type="submit">Mint Egg</button>
+    </form>
+
+    <hr>
+    <table border="1px solid black">
+        <tr>
+            <td>Type</td>
+            <td>Status</td>
+            <td>Value</td>
+            <td>Note</td>
+            <td>Date</td>
+            <td>#</td>
+        </tr>
+        <% logs.forEach(function(log){ %>
+        <tr>
+            <td><%- log.type %></td>
+            <td><%- log.status %></td>
+            <td><%- log.tokens %></td>
+            <td><%- log.note %></td>
+            <td><%- log.createdAt %></td>
+            <td><%- log.transaction %></td>
+        </tr>
+        <% }); %>
+    </table>
+    
+            
+</body>
+
+</html>
