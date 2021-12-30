@@ -1,18 +1,7 @@
-var requestify = require("requestify");
-const {QueryTypes} = require("sequelize");
-const {increaseBalanceByWallet} = require("./user");
+const { increaseBalanceByWallet } = require("./user");
 
 const Rewards = require("../models/reward");
-const {getRandomNumber} = require("./helper");
-
-console.log(increaseBalanceByWallet);
-
-const getTokenPrice = async () => {
-    let result = await requestify.get(
-        `https://api.pancakeswap.info/api/v2/tokens/0xd44fd09d74cd13838f137b590497595d6b3feea4`
-    );
-    return JSON.parse(result.body).data.price;
-};
+const { getRandomNumber } = require("./helper");
 
 const calculateReward = async (rarity) => {
     let tokenPrice = await getTokenPrice();
@@ -25,7 +14,7 @@ const randomTokenReward = async (min, max) => {
 };
 
 const getRewardsByWallet = async (wallet) => {
-    return await Rewards.findAll({where: {wallet: wallet, claimed: false}});
+    return await Rewards.findAll({ where: { wallet: wallet, claimed: false } });
 };
 
 const giveTokenReward = async (monster, amount, wallet) => {
