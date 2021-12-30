@@ -7,7 +7,7 @@ const router = express.Router();
 router.get("/view/all", Monster.viewAll);
 
 router.post("/feed", Monster.feed);
-router.post("/update", Monster.feed);
+router.post("/update", Monster.update);
 router.post("/mint", Monster.mintEgg);
 
 module.exports = router;

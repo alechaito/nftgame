@@ -32,7 +32,8 @@
                         </td>
                         <td>
                             <form method="POST" action="http://localhost:3000/monster/update">
-                                <input type="hidden" name="uuid" value="<%= monster.id %>">
+                                <input type="hidden" name="monster_id" value="<%= monster.id %>">
+                                <input type="hidden" name="wallet" value="0x6C3CF1365a872915D8F6ab03C89326F28C8a146c">
                                 <button type="submit">Update</button>
                             </form>
                         </td>

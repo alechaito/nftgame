@@ -2,6 +2,7 @@ const {InventoryMonsters, Monsters} = require("../models/monster");
 const Database = require("../config/db");
 const {QueryTypes} = require("sequelize");
 const UsersController = require("./user");
+const Users = require("../models/user");
 const RewardController = require("./reward");
 const Helper = require("./helper");
 
@@ -168,9 +169,47 @@ const getRandomMonster = async (type) => {
     }
 };
 
+const update = async (req, res) => {
+    try {
+        let {monster_id, wallet} = req.body;
+        let updateCost = 300;
+        let myMonster = await InventoryMonsters.findOne({where: {id: monster_id}});
+
+        if (!myMonster) {
+            throw new Error(`Cannot find this monster with id: ${monster_id} `);
+        }
+
+        let user = await Users.findOne({where: {wallet: wallet}});
+        if (user.id != myMonster.id_user) {
+            throw new Error(`Players is not owner of this monster, possible try to hack.`);
+        }
+
+        if (parseFloat(user.balance) < updateCost) {
+            throw new Error(`User balance is not enough to update monster: ${user.balance}.`);
+        }
+
+        let nextLevel = parseFloat(myMonster.level) + 1;
+        let experienceToNextLevel = parseFloat(nextLevel * 1000);
+
+        if (parseFloat(myMonster.exp) < experienceToNextLevel) {
+            throw new Error(`Monster doenst not have experience necessary to next lvl.`);
+        }
+
+        // its all ok, lets upgrade monster to the next level
+        await myMonster.update({level: nextLevel});
+        await UsersController.increaseBalanceByWallet(wallet, -updateCost);
+        console.log(`Ok, monster upgrade to level ${nextLevel}`);
+        return res.redirect("/monster/view/all");
+    } catch (error) {
+        console.log(error);
+        return res.redirect("/monster/view/all");
+    }
+};
+
 module.exports = {
     viewAll,
     feed,
     getInventoryMonsterByID,
     mintEgg,
+    update,
 };
