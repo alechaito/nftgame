@@ -67,29 +67,37 @@ const feed = async (req, res) => {
     return res.redirect("/monster/view/all");
 };
 
-const getEggPrice = async () => {
-    return 1;
-};
-
 const mintEgg = async (req, res) => {
     try {
         let { wallet } = req.body;
+        let eggCost = 1;
         // check params
         if (!Helper.validParam(wallet)) {
+            throw new Error(`Input wallet is not valid.`);
         }
-        //-----------------------
-        let eggPrice = await getEggPrice();
         let user = await UsersController.getByWallet(wallet);
-        console.log(user.balance);
-        console.log(eggPrice);
-        if (user && user.balance >= eggPrice) {
-            let result = await UsersController.increaseBalanceByWallet(wallet, -eggPrice);
-            let rarity = await randomRarity();
-            let monster = await getRandomMonster(rarity);
-            if (result && monster != null) {
-                await createInventoryMonster(wallet, monster);
-            }
+        if (!user) {
+            throw new Error(`User with this wallet not exit.`);
         }
+
+        if (user.balance < eggCost) {
+            throw new Error(`User balance is not enough to buy egg.`);
+        }
+
+        let mintedMonster = await getRandomMonster();
+
+        if (!mintedMonster) {
+            throw new Error(`Error on mint monster, get random function.`);
+        }
+
+        let result = await UsersController.increaseBalanceByWallet(wallet, -eggCost);
+
+        if (!result) {
+            throw new Error(`Error on deduce balance to ming egg.`);
+        }
+
+        await createInventoryMonster(wallet, mintedMonster);
+
         return res.redirect("/account/manage");
     } catch (error) {
         console.log(error);
@@ -124,11 +132,13 @@ const randomRarity = async () => {
     }
 };
 
-const getRandomMonster = async (type) => {
+const getRandomMonster = async () => {
     try {
-        let monsters = await Monsters.findAll({ where: { rarity: type } });
-        let randomNumber = await Helper.getRandomNumber(0, monster.length);
-        return monsters[randomNumber];
+        let rarity = await randomRarity();
+        console.log(`Rarity ${rarity}`);
+        let monsters = await Monsters.findAll({ where: { rarity: rarity } });
+        let randomNumber = await Helper.getRandomNumber(1, monsters.length - 1);
+        return monsters[randomNumber - 1];
     } catch (error) {
         console.log(error);
         return null;
