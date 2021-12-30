@@ -3,10 +3,7 @@ const Database = require("../config/db");
 const { QueryTypes } = require("sequelize");
 const UsersController = require("./user");
 const Users = require("../models/user");
-const RewardController = require("./reward");
 const Helper = require("./helper");
-
-const { randomBytes } = require("crypto");
 
 var wallet = "0x6C3CF1365a872915D8F6ab03C89326F28C8a146c";
 
@@ -25,17 +22,10 @@ const getAllByUserId = async (id_user) => {
 const viewAll = async (req, res) => {
     let user = await UsersController.getByWallet(wallet);
     let myMonsters = await getAllByUserId(user.id);
-    //let rewards = await RewardController.getRewardsByWallet(wallet);
     return res.render("mymonsters.ejs", {
         monsters: myMonsters,
         user: user,
     });
-};
-
-const getLevel = async (exp, lvl) => {
-    var nextlvl = lvl * 1000 - exp;
-    console.log("nextlvl", nextlvl);
-    return Math.trunc(exp / 1000) + 1;
 };
 
 const getInventoryMonsterByID = async (id) => {
@@ -58,15 +48,12 @@ const feed = async (req, res) => {
         console.log(user.elixir);
         if (user && user.elixir > 0) {
             console.log("nao e null");
-            //await RewardController.giveReward(instance, user.wallet);
             await UsersController.increaseElixir(user.wallet, -1);
             // feed and set exp
             console.log("instance id monster", instance.id_monster);
             let monster = await Monsters.findOne({
                 where: { id: instance.id_monster },
             });
-            let newexp = instance.exp + (await getExpByRarity(monster.rarity));
-            //let level = await getLevel(newexp, instance.level);
             let resultFeed = await instance.update({
                 feed: true,
             });
