@@ -129,7 +129,14 @@ const deposit = async (req, res) => {
     try {
         let { wallet, amount } = req.body;
 
-        let result = await increaseBalanceByWallet(wallet, parseFloat(amount));
+        if (!Helper.validParam(wallet)) throw new Error(`Invalid wallet.`);
+        if (!Helper.validParam(amount)) throw new Error(`Invalid amount.`);
+        if (typeof amount != "number") throw new Error(`Invalid amount type.`);
+
+        amount = parseFloat(amount);
+        if (parseFloat(amount) <= 0) throw new Error(`Invalid deposit amount.`);
+
+        await increaseBalanceByWallet(wallet, parseFloat(amount));
 
         await Logs.insert({
             type: "Deposit",
@@ -191,6 +198,15 @@ const getTotalWithdraw = async (amount, days) => {
 const withdraw = async (req, res) => {
     try {
         let { wallet, amount } = req.body;
+
+        if (!Helper.validParam(wallet)) throw new Error(`Invalid wallet.`);
+        if (!Helper.validParam(amount)) throw new Error(`Invalid amount.`);
+        if (typeof amount != "number") throw new Error(`Invalid amount type.`);
+
+        amount = parseFloat(amount);
+        if (parseFloat(amount) <= 0) throw new Error(`Invalid withdraw amount.`);
+        if (parseFloat(amount) > 200) throw new Error(`Invalid withdraw amount, max 200.`);
+
         let user = await getByWallet(wallet);
 
         if (!user) throw new Error(`User not exist.`);
@@ -200,6 +216,9 @@ const withdraw = async (req, res) => {
         }
 
         let daysDiff = await Helper.getDeltaTimeFromNow(user.last_withdraw);
+        console.log("days_diff", daysDiff);
+        if (daysDiff < 1) throw new Error(`Need to wait 24 hours to withdraw.`);
+
         let totalWithdraw = await getTotalWithdraw(amount, daysDiff);
 
         if (totalWithdraw == null) throw new Error(`Cannot get fee value.`);
