@@ -1,4 +1,5 @@
-const { InventoryMonsters, Monsters } = require("../models/monster");
+const Monsters = require("../models/monster");
+const InventoryMonsters = require("../models/inventory_monster");
 const Database = require("../config/db");
 const { QueryTypes } = require("sequelize");
 const UsersController = require("./user");
