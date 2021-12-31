@@ -7,6 +7,15 @@ const Helper = require("./helper");
 
 var wallet = "0x6C3CF1365a872915D8F6ab03C89326F28C8a146c";
 
+const viewAll = async (req, res) => {
+    let user = await UsersController.getByWallet(wallet);
+    let myMonsters = await getAllByUserId(user.id);
+    return res.render("mymonsters.ejs", {
+        monsters: myMonsters,
+        user: user,
+    });
+};
+
 const getAllByUserId = async (id_user) => {
     return await Database.query(
         `SELECT m.name, m.image, m.rarity, im.feed, im.exp, im.level, im.id FROM inventory_monsters im
@@ -17,15 +26,6 @@ const getAllByUserId = async (id_user) => {
             type: QueryTypes.SELECT,
         }
     );
-};
-
-const viewAll = async (req, res) => {
-    let user = await UsersController.getByWallet(wallet);
-    let myMonsters = await getAllByUserId(user.id);
-    return res.render("mymonsters.ejs", {
-        monsters: myMonsters,
-        user: user,
-    });
 };
 
 const getInventoryMonsterByID = async (id) => {

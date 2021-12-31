@@ -11,14 +11,14 @@
 
     <form method="POST" action="http://localhost:3000/account/deposit">
         <input type="hidden" name="wallet" value="<%- user.wallet %>"/>
-        <input type="hidden" name="amount" value="10"/>
+        <input type="number" name="amount"/>
         <button type="submit">Deposit</button>
     </form>
     
     <form method="POST" action="http://localhost:3000/account/withdraw">
         <input type="hidden" name="wallet" value="<%- user.wallet %>"/>
-        <input type="hidden" name="amount" value="-10"/>
-        <button type="submit">Withdraw</button>
+        <input type="number" name="amount"/>
+        <button type="submit">Withdraw (Fee <%- withdraw_fee*100 %>%)</button>
     </form>
 
     <hr>
@@ -43,7 +43,11 @@
         <tr>
             <td><%- log.type %></td>
             <td><%- log.status %></td>
-            <td><%- log.tokens %></td>
+            <% if (log.exp != null) { %>
+                <td><%- log.tokens %> tokens / <%- log.exp %> xp</td>
+            <% } else { %>
+            <td><%- log.tokens %> tokens</td>
+            <% } %>
             <td><%- log.note %></td>
             <td><%- log.createdAt %></td>
             <td><%- log.transaction %></td>

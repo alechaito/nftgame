@@ -18,11 +18,11 @@ const Logs = database.define("logs", {
     },
     tokens: {
         type: Sequelize.FLOAT,
-        allowNull: false,
+        allowNull: true,
     },
     exp: {
         type: Sequelize.FLOAT,
-        allowNull: false,
+        allowNull: true,
     },
     note: {
         type: Sequelize.STRING,

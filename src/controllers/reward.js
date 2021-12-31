@@ -3,12 +3,6 @@ const { increaseBalanceByWallet } = require("./user");
 const Rewards = require("../models/reward");
 const { getRandomNumber } = require("./helper");
 
-const calculateReward = async (rarity) => {
-    let tokenPrice = await getTokenPrice();
-    console.log(tokenPrice);
-    return 1;
-};
-
 const randomTokenReward = async (min, max) => {
     return await getRandomNumber(min, max);
 };

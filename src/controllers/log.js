@@ -3,7 +3,7 @@ const Logs = require("../models/log");
 const insert = async (logInfo) => {
     try {
         let { type, status, tokens, exp, note, transaction, wallet } = logInfo;
-        Logs.create({
+        await Logs.create({
             type: type,
             status: status,
             tokens: tokens,

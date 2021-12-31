@@ -1,8 +1,6 @@
 const Database = require("../config/db");
 const { QueryTypes } = require("sequelize");
-
 const Users = require("../models/user");
-//const RewardController = require("./reward");
 const Helper = require("./helper");
 const Logs = require("./log");
 
@@ -12,9 +10,12 @@ var wallet = "0x6C3CF1365a872915D8F6ab03C89326F28C8a146c";
 const accountView = async (req, res) => {
     let user = await getByWallet(wallet);
     let logs = await Logs.getAllByWallet(wallet);
+    let daysDiff = await getWithdrawTimeDiffInDays(user.last_withdraw);
+    let withdraw_fee = await getFeeByDays(daysDiff);
     return res.render("account.ejs", {
         user,
         logs,
+        withdraw_fee,
     });
 };
 //===========================
@@ -64,32 +65,39 @@ const increaseBalanceByWallet = async (wallet, amount) => {
     }
 };
 
-const getElixirPrice = async () => {
-    return 1;
-};
-
 const buyElixir = async (req, res) => {
     try {
         let { wallet, amount } = req.body;
-        amount = parseInt(amount);
+        amount = parseFloat(amount);
+        let elixirCost = 1;
         // check params
-        if (!Helper.validParam(wallet)) return res.redirect("/monster/view/all");
-        if (!Helper.validParam(amount)) return res.redirect("/monster/view/all");
-        if (typeof amount != "number") return res.redirect("/monster/view/all");
-        if (amount <= 0) return res.redirect("/monster/view/all");
+        if (!Helper.validParam(wallet)) throw new Error(`Invalid wallet.`);
+        if (!Helper.validParam(amount)) throw new Error(`Invalid amount.`);
+        if (typeof amount != "number") throw new Error(`Invalid amount type.`);
+        if (amount <= 0) throw new Error(`Invalid amount.`);
         //--------------------------------------------
-        let total = (await getElixirPrice()) * amount;
+        let totalCost = elixirCost * amount;
         let balance = await getBalanceByWallet(wallet);
-        console.log("balance", balance);
-        console.log("total", total);
-        if (balance >= total && amount > 0) {
-            let result = await increaseBalanceByWallet(wallet, -total);
-            console.log("result", result);
-            if (result) {
-                await increaseElixir(wallet, amount);
-                console.log("Elixir comprado com sucesso");
-            }
-        }
+
+        if (balance < totalCost) throw new Error(`Insuficient balance to buy elixir.`);
+
+        let result = await increaseBalanceByWallet(wallet, -totalCost);
+
+        if (!result) throw new Error(`Cannot deduce amount from wallet ${wallet}.`);
+
+        await increaseElixir(wallet, amount);
+        console.log("Elixir comprado com sucesso");
+
+        await Logs.insert({
+            type: "Buy Elixir",
+            status: "Success",
+            tokens: amount,
+            exp: null,
+            note: `Bought ${amount} elixirs for ${totalCost}`,
+            transaction: "",
+            wallet: wallet,
+        });
+
         return res.redirect("/monster/view/all");
     } catch (error) {
         console.log(error);
@@ -101,15 +109,17 @@ const increaseElixir = async (wallet, amount) => {
     try {
         amount = parseInt(amount);
         console.log("elixir amount", amount);
+
         // check params
-        if (!Helper.validParam(wallet)) return res.redirect("/monster/view/all");
-        if (!Helper.validParam(amount)) return res.redirect("/monster/view/all");
-        if (typeof amount != "number") return res.redirect("/monster/view/all");
+        if (!Helper.validParam(wallet)) throw new Error(`Invalid wallet.`);
+        if (!Helper.validParam(amount)) throw new Error(`Invalid amount.`);
+        if (typeof amount != "number") throw new Error(`Invalid amount type.`);
         //-----------------------
+
         let user = await getByWallet(wallet);
-        if (user) {
-            await user.update({ elixir: user.elixir + amount });
-        }
+        if (!user) throw new Error(`User not exist.`);
+
+        await user.update({ elixir: parseFloat(user.elixir) + amount });
     } catch (error) {
         console.log(error);
     }
@@ -120,6 +130,17 @@ const deposit = async (req, res) => {
         let { wallet, amount } = req.body;
 
         let result = await increaseBalanceByWallet(wallet, parseFloat(amount));
+
+        await Logs.insert({
+            type: "Deposit",
+            status: "Pending",
+            tokens: amount,
+            exp: null,
+            note: `Deposit ${amount} CMTO`,
+            transaction: "",
+            wallet: wallet,
+        });
+
         return res.redirect("/account/manage");
     } catch (error) {
         console.log(error);
@@ -138,28 +159,82 @@ const getWithdrawTimeDiffInDays = async (lastWidthaw) => {
     }
 };
 
+const getFeeByDays = async (days) => {
+    try {
+        switch (days) {
+            case 6:
+                return 0.1;
+            case 5:
+                return 0.2;
+            case 4:
+                return 0.3;
+            case 3:
+                return 0.4;
+            case 2:
+                return 0.5;
+            case 1:
+                return 0.6;
+            case 0:
+                return 0.7;
+            default:
+                return 0.05;
+        }
+        return null;
+    } catch (error) {
+        console.log(error);
+        return null;
+    }
+};
+
+const getTotalWithdraw = async (amount, days) => {
+    try {
+        console.log(days);
+        let fee = await getFeeByDays(days);
+        if (fee == null) throw new Error(`Invalid fee.`);
+        console.log(fee);
+        return parseFloat(amount) - parseFloat(amount) * parseFloat(fee);
+    } catch (error) {
+        console.log(error);
+        return null;
+    }
+};
+
 const withdraw = async (req, res) => {
     try {
         let { wallet, amount } = req.body;
         let user = await getByWallet(wallet);
-        if (user) {
-            let daysDiff = await getWithdrawTimeDiffInDays(user.last_withdraw);
-            console.log("days", daysDiff);
-            // check if last withdraw has 5 days and if user balance is higger
-            if (daysDiff >= 5 && parseFloat(user.balance) >= parseFloat(Math.abs(amount))) {
-                // removing balance from user account
-                let result = await increaseBalanceByWallet(wallet, parseFloat(amount));
-                console.log("Withdraw with success...");
-                // updating last withdraw date
-                user.update({ last_withdraw: new Date() });
-            } else {
-                console.log(`Error on withdraw...`);
-            }
+
+        if (!user) throw new Error(`User not exist.`);
+
+        if (parseFloat(user.balance) < parseFloat(amount)) {
+            throw new Error(`Withdraw amount higger than user balance.`);
         }
+
+        let daysDiff = await getWithdrawTimeDiffInDays(user.last_withdraw);
+        let totalWithdraw = await getTotalWithdraw(amount, daysDiff);
+
+        if (totalWithdraw == null) throw new Error(`Cannot get fee value.`);
+
+        // removing balance from user account
+        let result = await increaseBalanceByWallet(wallet, parseFloat(-amount));
+        console.log("Withdraw with success...");
+        // updating last withdraw date
+        user.update({ last_withdraw: new Date() });
+
+        await Logs.insert({
+            type: "Withdraw",
+            status: "Pending",
+            tokens: amount,
+            exp: null,
+            note: `Withdraw ${amount} and receive ${totalWithdraw}`,
+            transaction: "",
+            wallet: user.wallet,
+        });
+
         return res.redirect("/account/manage");
     } catch (error) {
         console.log(error);
-        return null;
+        return res.redirect("/account/manage");
     }
 };
 

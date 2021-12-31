@@ -2,6 +2,7 @@ const { InventoryMonsters, Monsters } = require("../models/monster");
 const { randomTokenReward, getExpByRarity, giveTokenReward } = require("./reward");
 const Helper = require("./helper");
 const Users = require("../models/user");
+const Logs = require("./log");
 
 var wallet = "0x6C3CF1365a872915D8F6ab03C89326F28C8a146c";
 
@@ -76,6 +77,16 @@ const start = async (req, res) => {
         await giveTokenReward(myMonster, tokenReward, user.wallet);
         // setting new monster exp
         await myMonster.update({ exp: parseFloat(myMonster.exp) + parseFloat(expReward) });
+
+        await Logs.insert({
+            type: "Dungeon",
+            status: "Success",
+            tokens: tokenReward,
+            exp: expReward,
+            note: `Dungeon success with Monster #${myMonster.id}.`,
+            transaction: "",
+            wallet: user.wallet,
+        });
         return res.redirect("/monster/view/all");
     } catch (error) {
         console.log(error);
