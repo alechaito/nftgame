@@ -1,4 +1,5 @@
-const { InventoryMonsters, Monsters } = require("../models/monster");
+const Monsters = require("../models/monster");
+const InventoryMonsters = require("../models/inventory_monster");
 const { randomTokenReward, getExpByRarity, giveTokenReward } = require("./reward");
 const Helper = require("./helper");
 const Users = require("../models/user");
@@ -40,6 +41,7 @@ const isSuccess = async (percentage) => {
 const start = async (req, res) => {
     try {
         let { monster_id, quest_id } = req.body;
+
         let myMonster = await InventoryMonsters.findOne({
             where: { id: monster_id },
         });
@@ -56,10 +58,21 @@ const start = async (req, res) => {
         }
 
         if (myMonster.feed == 0) {
-            throw new Error("Monster are hungry and connot start a dungeon, please feed it.");
+            throw new Error("Monster are hungry, please feed it.");
+        }
+
+        // first dungeon comes with null value and not check delta_days
+        if (myMonster.last_dungeon != null) {
+            let deltaDays = await Helper.getDeltaTimeFromNow(myMonster.last_dungeon);
+
+            if (deltaDays < 1) {
+                throw new Error("You need to wait 24 hours to start a quest.");
+            }
         }
 
         if (!(await isSuccess(questInfo.success))) {
+            // updating date of last dungeon
+            await myMonster.update({ last_dungeon: new Date() });
             throw new Error("You have failed to complet the quest.");
         }
 
@@ -87,6 +100,8 @@ const start = async (req, res) => {
             transaction: "",
             wallet: user.wallet,
         });
+        // updating date of last dungeon
+        await myMonster.update({ last_dungeon: new Date() });
         return res.redirect("/monster/view/all");
     } catch (error) {
         console.log(error);
