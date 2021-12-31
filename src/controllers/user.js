@@ -10,7 +10,7 @@ var wallet = "0x6C3CF1365a872915D8F6ab03C89326F28C8a146c";
 const accountView = async (req, res) => {
     let user = await getByWallet(wallet);
     let logs = await Logs.getAllByWallet(wallet);
-    let daysDiff = await getWithdrawTimeDiffInDays(user.last_withdraw);
+    let daysDiff = await Helper.getDeltaTimeFromNow(user.last_withdraw);
     let withdraw_fee = await getFeeByDays(daysDiff);
     return res.render("account.ejs", {
         user,
@@ -148,17 +148,6 @@ const deposit = async (req, res) => {
     }
 };
 
-const getWithdrawTimeDiffInDays = async (lastWidthaw) => {
-    try {
-        let now = parseInt(new Date().getTime());
-        let withdrawTime = parseInt(lastWidthaw.getTime());
-        return Math.floor((now - withdrawTime) / 1000 / 60 / 60 / 24);
-    } catch (error) {
-        console.log(error);
-        return 0;
-    }
-};
-
 const getFeeByDays = async (days) => {
     try {
         switch (days) {
@@ -210,7 +199,7 @@ const withdraw = async (req, res) => {
             throw new Error(`Withdraw amount higger than user balance.`);
         }
 
-        let daysDiff = await getWithdrawTimeDiffInDays(user.last_withdraw);
+        let daysDiff = await Helper.getDeltaTimeFromNow(user.last_withdraw);
         let totalWithdraw = await getTotalWithdraw(amount, daysDiff);
 
         if (totalWithdraw == null) throw new Error(`Cannot get fee value.`);
