@@ -39,33 +39,37 @@ const getInventoryMonsterByID = async (id) => {
 };
 
 const feed = async (req, res) => {
-    let { uuid, wallet } = req.body;
+    try {
+        let { uuid } = req.body;
 
-    let instance = await getInventoryMonsterByID(uuid);
-    //console.log("instance", instance);
-    if (instance.feed == false) {
+        let instance = await getInventoryMonsterByID(uuid);
+
+        if (!instance) throw new Error(`Cannot get monster instance.`);
+        if (instance.feed) throw new Error(`Monster not hungry.`);
+
         let user = await UsersController.getByInventoryMonsterUUID(uuid);
+        let userWallet = await Users.findOne({ where: { wallet: wallet } });
+
         console.log("usuario", user);
         console.log(user.elixir);
-        if (user && user.elixir > 0) {
-            console.log("nao e null");
-            await UsersController.increaseElixir(user.wallet, -1);
-            // feed and set exp
-            console.log("instance id monster", instance.id_monster);
-            let monster = await Monsters.findOne({
-                where: { id: instance.id_monster },
-            });
-            let resultFeed = await instance.update({
-                feed: true,
-            });
-        }
-    } else {
-        console.log("[LOG] Monster not hungry..");
-        let resultFeed = await instance.update({ feed: false });
-        //console.log("result update", resultFeed.dataValues.id);
-    }
 
-    return res.redirect("/monster/view/all");
+        if (!user) throw new Error(`Cannot get user.`);
+        if (!userWallet) throw new Error(`Cannot get user wallet.`);
+        if (user.id != userWallet.id) throw new Error(`That monster is not yours.`);
+        if (user.elixir <= 0) throw new Error(`Didnt have elixir, please buy.`);
+
+        await UsersController.increaseElixir(user.wallet, -1);
+
+        await instance.update({
+            feed: true,
+        });
+
+        console.log("All right, monster feeded.");
+        return res.redirect("/monster/view/all");
+    } catch (error) {
+        console.log(error);
+        return res.redirect("/monster/view/all");
+    }
 };
 
 const mintEgg = async (req, res) => {
