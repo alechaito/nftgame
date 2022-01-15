@@ -5,6 +5,8 @@ const { QueryTypes } = require("sequelize");
 const UsersController = require("./user");
 const Users = require("../models/user");
 const Helper = require("./helper");
+const CMNFT = require("./CMNFT.json");
+const ethers = require("ethers");
 
 var wallet = "0x6C3CF1365a872915D8F6ab03C89326F28C8a146c";
 
@@ -14,7 +16,43 @@ const viewAll = async (req, res) => {
     return res.render("mymonsters.ejs", {
         monsters: myMonsters,
         user: user,
+        abi: CMNFT.abi,
     });
+};
+
+const mymonsters = async (req, res) => {
+    let { wallet } = req.body;
+    var user = await UsersController.getByWallet(wallet);
+    if (!user) {
+        user = await Users.create({
+            wallet: wallet,
+            balance: 0,
+            elixir: 0,
+        });
+        console.log("User not exist, created");
+    }
+
+    let monsters = await getAllByUserId(user.id);
+    let monsterBalance = await checkMonsterBalance(wallet);
+    if (monsters.length < monsterBalance) {
+        await mint(wallet);
+    } else {
+        console.log("max atingido");
+    }
+    return res.json(monsters);
+};
+
+const checkMonsterBalance = async (wallet) => {
+    var provider = new ethers.providers.JsonRpcProvider(
+        "https://data-seed-prebsc-1-s1.binance.org:8545"
+    );
+    let contract = new ethers.Contract(
+        "0x9Dbf720cdbe90879A69B85EAb680D429E491D35f",
+        CMNFT.abi,
+        provider
+    );
+    let result = await contract.addressMintedBalance(wallet);
+    return parseInt(result._hex, 16);
 };
 
 const getAllByUserId = async (id_user) => {
@@ -72,6 +110,22 @@ const feed = async (req, res) => {
     }
 };
 
+const mint = async (wallet) => {
+    let mintedMonster = await getRandomMonster();
+
+    if (!mintedMonster) {
+        throw new Error(`Error on mint monster, get random function.`);
+    }
+
+    /*let result = await UsersController.increaseBalanceByWallet(wallet, -eggCost);
+
+    if (!result) {
+        throw new Error(`Error on deduce balance to ming egg.`);
+    }*/
+
+    await createInventoryMonster(wallet, mintedMonster);
+};
+
 const mintEgg = async (req, res) => {
     try {
         let { wallet } = req.body;
@@ -85,9 +139,9 @@ const mintEgg = async (req, res) => {
             throw new Error(`User with this wallet not exit.`);
         }
 
-        if (user.balance < eggCost) {
+        /*if (user.balance < eggCost) {
             throw new Error(`User balance is not enough to buy egg.`);
-        }
+        }*/
 
         let mintedMonster = await getRandomMonster();
 
@@ -95,18 +149,18 @@ const mintEgg = async (req, res) => {
             throw new Error(`Error on mint monster, get random function.`);
         }
 
-        let result = await UsersController.increaseBalanceByWallet(wallet, -eggCost);
+        /*let result = await UsersController.increaseBalanceByWallet(wallet, -eggCost);
 
         if (!result) {
             throw new Error(`Error on deduce balance to ming egg.`);
-        }
+        }*/
 
         await createInventoryMonster(wallet, mintedMonster);
 
-        return res.redirect("/account/manage");
+        return res.redirect("/monster/all");
     } catch (error) {
         console.log(error);
-        return res.redirect("/account/manage");
+        return res.redirect("/monster/all");
     }
 };
 
@@ -140,6 +194,7 @@ const randomRarity = async () => {
 const getRandomMonster = async () => {
     try {
         let rarity = await randomRarity();
+        rarity = "common";
         console.log(`Rarity ${rarity}`);
         let monsters = await Monsters.findAll({ where: { rarity: rarity } });
         let randomNumber = await Helper.getRandomNumber(1, monsters.length - 1);
@@ -150,10 +205,33 @@ const getRandomMonster = async () => {
     }
 };
 
+const getUpdateCost = async (level) => {
+    switch (level) {
+        case 2:
+            return 300;
+        case 3:
+            return 450;
+        case 4:
+            return 675;
+        case 5:
+            return 1012;
+        case 6:
+            return 1518;
+        case 7:
+            return 2278;
+        case 8:
+            return 3417;
+        case 9:
+            return 5125;
+        case 10:
+            return 7688;
+    }
+};
+
 const update = async (req, res) => {
     try {
         let { monster_id, wallet } = req.body;
-        let updateCost = 300;
+
         let myMonster = await InventoryMonsters.findOne({ where: { id: monster_id } });
 
         if (!myMonster) {
@@ -165,12 +243,13 @@ const update = async (req, res) => {
             throw new Error(`Players is not owner of this monster, possible try to hack.`);
         }
 
+        let nextLevel = parseFloat(myMonster.level) + 1;
+        let experienceToNextLevel = parseFloat(nextLevel * 1000);
+        let updateCost = await getUpdateCost(nextLevel);
+
         if (parseFloat(user.balance) < updateCost) {
             throw new Error(`User balance is not enough to update monster: ${user.balance}.`);
         }
-
-        let nextLevel = parseFloat(myMonster.level) + 1;
-        let experienceToNextLevel = parseFloat(nextLevel * 1000);
 
         if (parseFloat(myMonster.exp) < experienceToNextLevel) {
             throw new Error(`Monster doenst not have experience necessary to next lvl.`);
@@ -193,4 +272,5 @@ module.exports = {
     getInventoryMonsterByID,
     mintEgg,
     update,
+    mymonsters,
 };

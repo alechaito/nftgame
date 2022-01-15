@@ -8,9 +8,9 @@ const Logs = require("./log");
 var wallet = "0x6C3CF1365a872915D8F6ab03C89326F28C8a146c";
 
 var quests = [
-    { lvl_min: 0, lvl_max: 5, gas: 300, reward_min: 3, reward_max: 10, success: 81 },
-    { lvl_min: 6, lvl_max: 10, gas: 300, reward_min: 6, reward_max: 15, success: 81 },
-    { lvl_min: 11, lvl_max: 20, gas: 300, reward_min: 9, reward_max: 20, success: 81 },
+    { lvl_min: 0, lvl_max: 5, gas: 300, reward_min: 5, reward_max: 25, success: 81 },
+    { lvl_min: 6, lvl_max: 10, gas: 450, reward_min: 7, reward_max: 37, success: 81 },
+    { lvl_min: 11, lvl_max: 20, gas: 675, reward_min: 10, reward_max: 55, success: 81 },
 ];
 
 const getQuestInfos = async (idx_quest, level) => {
@@ -70,9 +70,13 @@ const start = async (req, res) => {
             }
         }
 
+        let expReward = await getExpByRarity(monster.rarity);
+        console.log("exp reward", expReward);
         if (!(await isSuccess(questInfo.success))) {
             // updating date of last dungeon
             await myMonster.update({ last_dungeon: new Date() });
+            // setting exp even fail
+            await myMonster.update({ exp: parseFloat(myMonster.exp) + parseFloat(expReward) });
             throw new Error("You have failed to complet the quest.");
         }
 
@@ -83,8 +87,6 @@ const start = async (req, res) => {
         console.log("token reward", tokenReward);
         // getting exp reward by rarity and table
         let monster = await Monsters.findOne({ where: { id: myMonster.id_monster } });
-        let expReward = await getExpByRarity(monster.rarity);
-        console.log("exp reward", expReward);
         // save on database rewards gained
         // setting tokens to balance
         await giveTokenReward(myMonster, tokenReward, user.wallet);

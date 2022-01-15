@@ -1,88 +1,390 @@
-<html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <meta name="description" content="" />
+        <meta name="author" content="Mark Otto, Jacob Thornton, and Bootstrap contributors" />
+        <meta name="generator" content="Hugo 0.88.1" />
+        <title>Coin Monsters - Play to Earn</title>
 
-<head></head>
+        <link rel="canonical" href="https://getbootstrap.com/docs/5.1/examples/album/" />
 
-<body>
-    Wallet: <%- user.wallet %>
-        </br>
-        Balance: <%- user.balance %> tokens</br>
-        Elixirs: <%- user.elixir %> elixirs</br>
+        <!-- Bootstrap core CSS -->
+        <link
+            rel="stylesheet"
+            href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css"
+            integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3"
+            crossorigin="anonymous"
+        />
 
-            <hr>
-            <table border="1px solid black">
-                <% monsters.forEach(function(monster){ %>
-                    <tr>
-                        <td>
-                            <img src="http://localhost:3000/monsters/<%=monster.image %>" />
-                            </br>
-                            <%- monster.name %></br>
-                            (<%- monster.rarity %>)
-                        </td>
-                        <td>
-                            XP: <%- monster.exp %></br>
-                            Level: <%- monster.level %></br>
-                        </td>
-                        <td>
-                            Hungry: <%- monster.feed %></br>
-                        </td>
-                        <td>
-                            <form method="POST" action="http://localhost:3000/monster/feed">
-                                <input type="hidden" name="uuid" value="<%= monster.id %>">
-                                <button type="submit">Feed</button>
-                            </form>
-                        </td>
-                        <td>
-                            <form method="POST" action="http://localhost:3000/monster/update">
-                                <input type="hidden" name="monster_id" value="<%= monster.id %>">
-                                <input type="hidden" name="wallet" value="0x6C3CF1365a872915D8F6ab03C89326F28C8a146c">
-                                <button type="submit">Update</button>
-                            </form>
-                        </td>
-                    </tr>
-                    <% }); %>
-            </table>
-            <hr>
-         <form method="POST" action="http://localhost:3000/account/buyelixir">
-            <label>Buy Elixir</label>
-            <input type="hidden" name="wallet" value="0x6C3CF1365a872915D8F6ab03C89326F28C8a146c">
-            <input type="number" name="amount"/>
-            <button type="submit">BUY</button>
-        </form>
-        <hr>
-        <h1>Dungeons</h1>
-        <form method="POST" action="http://localhost:3000/quest/start">
-            <label>Select Monster</label>
-            <select name="monster_id">
-                <% monsters.forEach(function(monster){ %>
-                <option value="<%- monster.id %>"><%- monster.name %></option>
-                <% }); %>
-            </select>
-            </br>
-            </br>
-            <input type="hidden" name="quest_id" value="0">
-            <table border="1px solid black">
-                <tr>
-                    <td>Dungeon 1</td>
-                    <td>Reward: 0.005 tokens</td>
-                    <td>Success: 81%</td>
-                    <td>Level needed: 0-5</td>
-                    <td><button type="submit">Start Adventure</button></td>
-                </tr>
-                <tr>
-                    <td>Dungeon 2</td>
-                    <td>Reward: 0.005 tokens</td>
-                    <td>Success: 81%</td>
-                    <td>Level needed: 6-10</td>
-                    <td><button>Start Adventure</button></td>
-                </tr>
-                <tr>
-                    <td>Dungeon 3</td>
-                    <td>Reward: 0.005 tokens</td>
-                    <td>Success: 81%</td>
-                    <td>Level needed: 11-15</td>
-                    <td><button>Start Adventure</button></td>
-                </tr>
-            </table>
-        </form>
-</body>
+        <!-- Favicons -->
+        <link
+            rel="apple-touch-icon"
+            href="/docs/5.1/assets/img/favicons/apple-touch-icon.png"
+            sizes="180x180"
+        />
+        <link
+            rel="icon"
+            href="/docs/5.1/assets/img/favicons/favicon-32x32.png"
+            sizes="32x32"
+            type="image/png"
+        />
+        <link
+            rel="icon"
+            href="/docs/5.1/assets/img/favicons/favicon-16x16.png"
+            sizes="16x16"
+            type="image/png"
+        />
+        <link rel="manifest" href="/docs/5.1/assets/img/favicons/manifest.json" />
+        <link
+            rel="mask-icon"
+            href="/docs/5.1/assets/img/favicons/safari-pinned-tab.svg"
+            color="#7952b3"
+        />
+        <link rel="icon" href="/docs/5.1/assets/img/favicons/favicon.ico" />
+        <meta name="theme-color" content="#7952b3" />
+
+        <style>
+            .bd-placeholder-img {
+                font-size: 1.125rem;
+                text-anchor: middle;
+                -webkit-user-select: none;
+                -moz-user-select: none;
+                user-select: none;
+            }
+
+            @media (min-width: 768px) {
+                .bd-placeholder-img-lg {
+                    font-size: 3.5rem;
+                }
+            }
+        </style>
+    </head>
+    <body>
+        <header>
+            <div class="navbar navbar-dark bg-dark shadow-sm">
+                <div class="container">
+                    <a href="#" class="navbar-brand d-flex align-items-center">
+                        <strong>CoinMonsters</strong>
+                    </a>
+                    <button id="wallet-connect" class="btn btn-primary">Connect Metamask</button>
+                    <button id="wallet-connected" class="btn btn-primary">Wallet Connected</button>
+                </div>
+            </div>
+        </header>
+
+        <main>
+            <section class="py-5 text-center container">
+                <div class="row py-lg-5">
+                    <div class="col-lg-6 col-md-8 mx-auto">
+                        <h1 class="fw-light">Claim Your NFT Monster for Free</h1>
+                        <p>
+                            <img
+                                src="http://localhost:3000/monsters/crocodile.gif"
+                                width="96px"
+                                height="96px"
+                            />
+
+                            <img
+                                src="http://localhost:3000/monsters/cyclops.gif"
+                                width="96px"
+                                height="96px"
+                            />
+
+                            <img
+                                src="http://localhost:3000/monsters/demon.gif"
+                                width="96px"
+                                height="96px"
+                            />
+
+                            <img
+                                src="http://localhost:3000/monsters/golem.gif"
+                                width="96px"
+                                height="96px"
+                            />
+
+                            <img
+                                src="http://localhost:3000/monsters/djin.gif"
+                                width="96px"
+                                height="96px"
+                            />
+
+                            <img
+                                src="http://localhost:3000/monsters/horse.gif"
+                                width="96px"
+                                height="96px"
+                            />
+
+                            <img
+                                src="http://localhost:3000/monsters/hydra.gif"
+                                width="96px"
+                                height="96px"
+                            />
+
+                            <img
+                                src="http://localhost:3000/monsters/medusa.gif"
+                                width="96px"
+                                height="96px"
+                            />
+
+                            <img
+                                src="http://localhost:3000/monsters/minotaur.gif"
+                                width="96px"
+                                height="96px"
+                            />
+
+                            <img
+                                src="http://localhost:3000/monsters/orc.gif"
+                                width="96px"
+                                height="96px"
+                            />
+
+                            <img
+                                src="http://localhost:3000/monsters/polar_bear.gif"
+                                width="96px"
+                                height="96px"
+                            />
+
+                            <img
+                                src="http://localhost:3000/monsters/scorpion.gif"
+                                width="96px"
+                                height="96px"
+                            />
+
+                            <img
+                                src="http://localhost:3000/monsters/skullcrusher.gif"
+                                width="96px"
+                                height="96px"
+                            />
+
+                            <img
+                                src="http://localhost:3000/monsters/spider.gif"
+                                width="96px"
+                                height="96px"
+                            />
+
+                            <img
+                                src="http://localhost:3000/monsters/unicorn.gif"
+                                width="96px"
+                                height="96px"
+                            />
+
+                            <img
+                                src="http://localhost:3000/monsters/electrify.gif"
+                                width="96px"
+                                height="96px"
+                            />
+
+                            <img
+                                src="http://localhost:3000/monsters/fire_elemental.gif"
+                                width="96px"
+                                height="96px"
+                            />
+
+                            <img
+                                src="http://localhost:3000/monsters/bonelord.gif"
+                                width="96px"
+                                height="96px"
+                            />
+
+                            <img
+                                src="http://localhost:3000/monsters/dragon.gif"
+                                width="96px"
+                                height="96px"
+                            />
+
+                            <img
+                                src="http://localhost:3000/monsters/snake.gif"
+                                width="96px"
+                                height="96px"
+                            />
+
+                            <img
+                                src="http://localhost:3000/monsters/demon_skeleton.gif"
+                                width="96px"
+                                height="96px"
+                            />
+
+                            <img
+                                src="http://localhost:3000/monsters/scarab.gif"
+                                width="96px"
+                                height="96px"
+                            />
+
+                            <img
+                                src="http://localhost:3000/monsters/hyena.gif"
+                                width="96px"
+                                height="96px"
+                            />
+
+                            <img
+                                src="http://localhost:3000/monsters/snowman.gif"
+                                width="96px"
+                                height="96px"
+                            />
+                        </p>
+                        <p>
+                            Common: 89% / Rare: 10% / Epic: 1%</br>
+                            <button id="claim" type="submit" class="btn btn-primary my-2">
+                                Claim Monster
+                            </button>
+                        </p>
+                        <hr>
+                        <h5>Game will be open 16/02/22</h5>
+                        <p class="lead text-muted">
+                            Also participate in our airdrop to receive <b>500 tokens</b>, just sign
+                            up for our whitelist.
+                        </p>
+                        <p>
+                            <a
+                                href="https://gleam.io/Nlw0B/whitelist-coinmonsters"
+                                target="_blank"
+                                class="btn btn-secondary my-2"
+                                >Enjoy Whitelist</a
+                            >
+                        </p>
+                    </div>
+                </div>
+            </section>
+
+            <div class="album py-5 bg-light">
+                <div class="container">
+                    <h2>My Monsters</h2>
+                    <div
+                        id="mymonsters"
+                        class="row row-cols-1 row-cols-sm-2 row-cols-md-3 g-3"
+                    ></div>
+                </div>
+            </div>
+        </main>
+
+        <footer class="text-muted py-5">
+            <div class="container">
+                <p class="float-end mb-1">
+                    <a href="#">Back to top</a>
+                </p>
+                <p class="mb-1">CoinMonsters.com - Play To Earn NFT Game - 2021</p>
+            </div>
+        </footer>
+
+        <script
+            src="/docs/5.1/dist/js/bootstrap.bundle.min.js"
+            integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p"
+            crossorigin="anonymous"
+        ></script>
+    </body>
 </html>
+
+<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+<script
+    src="https://cdn.ethers.io/lib/ethers-5.2.umd.min.js"
+    type="application/javascript"
+></script>
+
+<script>
+    $(document).ready(function () {
+
+        var provider = new ethers.providers.Web3Provider(window.ethereum);
+
+        const connect = async () => {
+            if (window.ethereum) {
+                var accounts = await provider.send("eth_requestAccounts", []);
+            }
+        }
+
+        const getAccount = async () => {
+            var accounts = await provider.listAccounts();
+            if(accounts.length > 0) {
+                return accounts[0];
+            }
+            return null;
+        }
+
+        const checkConnection =  () => {
+            provider.listAccounts().then(
+                accounts => {
+                    if(accounts.length > 0 ) {
+                        console.log("connected");
+                        $("#wallet-connect").hide();
+                        $("#wallet-connected").show();
+                    }
+                    else {
+                        console.log("disconnected");
+                        $("#wallet-connect").show();
+                        $("#wallet-connected").hide();
+
+                    }
+                }
+            );
+        }
+
+
+        const getContract = () => {
+            var signer = provider.getSigner();
+            const abi = <%- JSON.stringify(abi) %>;
+            return new ethers.Contract(
+                "0x9Dbf720cdbe90879A69B85EAb680D429E491D35f",
+                abi,
+                signer
+            );
+        }
+
+        const claimMonster = async () => {
+            var contract = getContract();
+            contract.mint(1, {value:new ethers.utils.parseEther("0.02")});
+        }
+
+        const getMyMonsters = async () => {
+            console.log("entrei");
+            var account = await getAccount();
+            if(account == null) return null;
+            var xhr = new XMLHttpRequest();
+            xhr.open("POST", "http://localhost:3000/monster/my", true);
+            xhr.setRequestHeader('Content-Type', 'application/json');
+            xhr.send(JSON.stringify({
+                wallet: account
+            }));
+            xhr.onload = function() {
+                var data = JSON.parse(this.responseText);
+                data.forEach(monster => {
+                    document.getElementById("mymonsters").innerHTML += `
+                    <div class="col">
+                        <div class="card shadow-sm">
+                            <center>
+                                <img
+                                    width="128px"
+                                    src="http://localhost:3000/monsters/${monster.image}"/>
+
+                                <div class="card-body">
+                                    <p class="card-text">
+                                        <b>${monster.name} (${monster.rarity})</b>
+                                    </p>
+                                </div>
+                            </center>
+                        </div>
+                    </div>`;
+                });
+                console.log(data);
+            }
+        }
+
+        getMyMonsters();
+
+        // claim event
+        var claim = document.getElementById("claim");
+        claim.addEventListener("click", function () {
+            claimMonster();
+        });
+
+        // connect wallet event
+        var walletconnect = document.getElementById("wallet-connect");
+        walletconnect.addEventListener("click", function () {
+            connect();
+        });
+
+        checkConnection();
+        setInterval(checkConnection, 2000);
+
+
+    });
+</script>

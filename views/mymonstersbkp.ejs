@@ -1,0 +1,88 @@
+<html>
+
+<head></head>
+
+<body>
+    Wallet: <%- user.wallet %>
+        </br>
+        Balance: <%- user.balance %> tokens</br>
+        Elixirs: <%- user.elixir %> elixirs</br>
+
+            <hr>
+            <table border="1px solid black">
+                <% monsters.forEach(function(monster){ %>
+                    <tr>
+                        <td>
+                            <img src="http://localhost:3000/monsters/<%=monster.image %>" />
+                            </br>
+                            <%- monster.name %></br>
+                            (<%- monster.rarity %>)
+                        </td>
+                        <td>
+                            XP: <%- monster.exp %></br>
+                            Level: <%- monster.level %></br>
+                        </td>
+                        <td>
+                            Hungry: <%- monster.feed %></br>
+                        </td>
+                        <td>
+                            <form method="POST" action="http://localhost:3000/monster/feed">
+                                <input type="hidden" name="uuid" value="<%= monster.id %>">
+                                <button type="submit">Feed</button>
+                            </form>
+                        </td>
+                        <td>
+                            <form method="POST" action="http://localhost:3000/monster/update">
+                                <input type="hidden" name="monster_id" value="<%= monster.id %>">
+                                <input type="hidden" name="wallet" value="0x6C3CF1365a872915D8F6ab03C89326F28C8a146c">
+                                <button type="submit">Update</button>
+                            </form>
+                        </td>
+                    </tr>
+                    <% }); %>
+            </table>
+            <hr>
+         <form method="POST" action="http://localhost:3000/account/buyelixir">
+            <label>Buy Elixir</label>
+            <input type="hidden" name="wallet" value="0x6C3CF1365a872915D8F6ab03C89326F28C8a146c">
+            <input type="number" name="amount"/>
+            <button type="submit">BUY</button>
+        </form>
+        <hr>
+        <h1>Dungeons</h1>
+        <form method="POST" action="http://localhost:3000/quest/start">
+            <label>Select Monster</label>
+            <select name="monster_id">
+                <% monsters.forEach(function(monster){ %>
+                <option value="<%- monster.id %>"><%- monster.name %></option>
+                <% }); %>
+            </select>
+            </br>
+            </br>
+            <input type="hidden" name="quest_id" value="0">
+            <table border="1px solid black">
+                <tr>
+                    <td>Dungeon 1</td>
+                    <td>Reward: 0.005 tokens</td>
+                    <td>Success: 81%</td>
+                    <td>Level needed: 0-5</td>
+                    <td><button type="submit">Start Adventure</button></td>
+                </tr>
+                <tr>
+                    <td>Dungeon 2</td>
+                    <td>Reward: 0.005 tokens</td>
+                    <td>Success: 81%</td>
+                    <td>Level needed: 6-10</td>
+                    <td><button>Start Adventure</button></td>
+                </tr>
+                <tr>
+                    <td>Dungeon 3</td>
+                    <td>Reward: 0.005 tokens</td>
+                    <td>Success: 81%</td>
+                    <td>Level needed: 11-15</td>
+                    <td><button>Start Adventure</button></td>
+                </tr>
+            </table>
+        </form>
+</body>
+</html>
