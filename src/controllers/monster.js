@@ -11,16 +11,16 @@ const ethers = require("ethers");
 var wallet = "0x6C3CF1365a872915D8F6ab03C89326F28C8a146c";
 
 const viewAll = async (req, res) => {
-    let user = await UsersController.getByWallet(wallet);
-    let myMonsters = await getAllByUserId(user.id);
     return res.render("mymonsters.ejs", {
-        monsters: myMonsters,
-        user: user,
         abi: CMNFT.abi,
     });
 };
 
-const mymonsters = async (req, res) => {
+const getABI = async (req, res) => {
+    return res.json(CMNFT.abi);
+};
+
+const getAll = async (req, res) => {
     let { wallet } = req.body;
     var user = await UsersController.getByWallet(wallet);
     if (!user) {
@@ -33,21 +33,19 @@ const mymonsters = async (req, res) => {
     }
 
     let monsters = await getAllByUserId(user.id);
-    let monsterBalance = await checkMonsterBalance(wallet);
+    /*let monsterBalance = await checkMonsterBalance(wallet);
     if (monsters.length < monsterBalance) {
         await mint(wallet);
     } else {
         console.log("max atingido");
-    }
+    }*/
     return res.json(monsters);
 };
 
 const checkMonsterBalance = async (wallet) => {
-    var provider = new ethers.providers.JsonRpcProvider(
-        "https://data-seed-prebsc-1-s1.binance.org:8545"
-    );
+    var provider = new ethers.providers.JsonRpcProvider("https://bsc-dataseed.binance.org/");
     let contract = new ethers.Contract(
-        "0x9Dbf720cdbe90879A69B85EAb680D429E491D35f",
+        "0xeC237071970A7a714b3AC13ce6eC6Ccd6b2d9ce6",
         CMNFT.abi,
         provider
     );
@@ -272,5 +270,6 @@ module.exports = {
     getInventoryMonsterByID,
     mintEgg,
     update,
-    mymonsters,
+    getAll,
+    getABI,
 };

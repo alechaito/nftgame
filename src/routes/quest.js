@@ -4,6 +4,6 @@ const Quest = require("../controllers/quest");
 const router = express.Router();
 
 // GETS
-//router.post("/start", Quest.start);
+router.post("/start", Quest.start);
 
 module.exports = router;
