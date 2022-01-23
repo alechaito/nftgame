@@ -22,4 +22,8 @@ const getDeltaTimeFromNow = async (date) => {
     }
 };
 
-module.exports = { validParam, getRandomNumber, getDeltaTimeFromNow };
+const getNonce = async () => {
+    return await getRandomNumber(1000, 9999);
+};
+
+module.exports = { validParam, getRandomNumber, getDeltaTimeFromNow, getNonce };

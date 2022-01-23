@@ -3,6 +3,8 @@ const { QueryTypes } = require("sequelize");
 const Users = require("../models/user");
 const Helper = require("./helper");
 const Logs = require("./log");
+const { ethers } = require("ethers");
+const jwt = require("jsonwebtoken");
 
 var wallet = "0x6C3CF1365a872915D8F6ab03C89326F28C8a146c";
 
@@ -19,6 +21,57 @@ const accountView = async (req, res) => {
     });
 };
 //===========================
+
+const getOrCreteByWallet = async (req, res) => {
+    try {
+        let { wallet } = req.body;
+        var user = await getByWallet(wallet);
+        if (!user) {
+            let nonce = await Helper.getNonce();
+
+            user = await Users.create({
+                wallet: wallet,
+                nonce: nonce,
+                balance: 0,
+                elixir: 0,
+            });
+        }
+        return res.json(user);
+    } catch (error) {
+        console.log(error);
+        return null;
+    }
+};
+
+const sign = async (req, res) => {
+    try {
+        let { wallet, signature } = req.body;
+        let user = await getByWallet(wallet);
+        if (!user) {
+            throw new Error(`Cannot get user to sign.`);
+        }
+
+        const msg = `I am signing my OTP: ${user.nonce}`;
+        const address = await ethers.utils.verifyMessage(msg, signature);
+        console.log(address);
+        if (address.toLowerCase() === wallet.toLowerCase()) {
+            user.nonce = await Helper.getNonce();
+            user.save();
+        } else {
+            throw new Error(`Invalid signature.`);
+        }
+        const token = jwt.sign({ wallet }, process.env.JWT, {
+            expiresIn: 300, // expires in 5min
+        });
+
+        console.log("token", token);
+
+        return res.json(token);
+    } catch (error) {
+        console.log(error);
+        return res.status(400).json(error);
+    }
+};
 
 const getByWallet = async (wallet) => {
     return await Users.findOne({ where: { wallet: wallet } });
@@ -255,4 +308,6 @@ module.exports = {
     increaseElixir,
     deposit,
     withdraw,
+    getOrCreteByWallet,
+    sign,
 };

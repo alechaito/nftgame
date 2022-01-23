@@ -25,7 +25,7 @@ app.use(express.static(__dirname + "/public"));
 
 const Monster = require("./src/controllers/monster");
 
-//app.get("/", Monster.viewAll);
+app.get("/home", Monster.viewAll);
 //app.get("/abi", Monster.getABI);
 app.use("/monster", monsterRoutes);
 app.use("/reward", rewardRoutes);

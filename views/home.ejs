@@ -272,8 +272,6 @@
 </html>
 
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/web3@latest/dist/web3.min.js"></script>
-
 <script
     src="https://cdn.ethers.io/lib/ethers-5.2.umd.min.js"
     type="application/javascript"
@@ -378,56 +376,11 @@
             connect();
         });
 
-        /*checkConnection();
+        checkConnection();
         setInterval(checkConnection, 2000);
 
         getMyMonsters();
         setInterval(getMyMonsters, 9000);
-        */
-
-        var signature = "0xc24c6bc667edfa02114f68c3db8c4827107d4bf52d729c40efc4a0fb926ee37c46133a8649d8de9d3799e42d82480a38ce2cf793916a06dca9f52adfa485036c1c";
-        const getUser = async () => {
-            console.log("chamei");
-            var account = await getAccount();
-            console.log("account", account);
-            var xhr = new XMLHttpRequest();
-            xhr.open("POST", "http://localhost:3000/account/user", true);
-            xhr.setRequestHeader('Content-Type', 'application/json');
-            xhr.send(JSON.stringify({
-                wallet: account
-            }));
-            console.log("chamei");
-            xhr.onload = function () {
-                var user = JSON.parse(this.responseText);
-                console.log(user);
-                var web3 = new Web3(window.ethereum);
-                var sign = web3.eth.personal
-                .sign(`I am signing my OTP: ${user.nonce}`, account, '').then((data) => {
-                        console.log(data);
-                        sign(data);
-                    }
-                );
-            }
-        }
-
-        console.log(window.ethereum);
-
-        function sign(data) {
-            var xhr = new XMLHttpRequest();
-            xhr.open("POST", "http://localhost:3000/account/sign", true);
-            xhr.setRequestHeader('Content-Type', 'application/json');
-            xhr.send(JSON.stringify({
-                wallet: "0x6C3CF1365a872915D8F6ab03C89326F28C8a146c",
-                signature: data,
-                //provider: window.ethereum
-            }));
-            xhr.onload = function () {
-                var x =  JSON.parse(this.responseText);
-                console.log(x);
-            }
-        }
-
-        sign(signature);
 
 
     });

@@ -12,6 +12,10 @@ const Users = database.define("users", {
         type: Sequelize.STRING,
         allowNull: false,
     },
+    nonce: {
+        type: Sequelize.INTEGER,
+        allowNull: false,
+    },
     balance: {
         type: Sequelize.FLOAT,
         allowNull: false,
