@@ -6,7 +6,7 @@ const router = express.Router();
 // GETS
 router.get("/manage", User.accountView);
 
-router.post("/user", User.getOrCreteByWallet);
+//router.post("/user", User.getOrCreteByWallet);
 router.post("/sign", User.sign);
 
 router.post("/buyelixir", User.buyElixir);

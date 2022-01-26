@@ -22,9 +22,8 @@ const accountView = async (req, res) => {
 };
 //===========================
 
-const getOrCreteByWallet = async (req, res) => {
+const getOrCreteByWallet = async (wallet) => {
     try {
-        let { wallet } = req.body;
         var user = await getByWallet(wallet);
         if (!user) {
             let nonce = await Helper.getNonce();
@@ -36,7 +35,7 @@ const getOrCreteByWallet = async (req, res) => {
                 elixir: 0,
             });
         }
-        return res.json(user);
+        return user;
     } catch (error) {
         console.log(error);
         return null;
@@ -46,7 +45,7 @@ const getOrCreteByWallet = async (req, res) => {
 const sign = async (req, res) => {
     try {
         let { wallet, signature } = req.body;
-        let user = await getByWallet(wallet);
+        let user = await getOrCreteByWallet(wallet);
         if (!user) {
             throw new Error(`Cannot get user to sign.`);
         }
